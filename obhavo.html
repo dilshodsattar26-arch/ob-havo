@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ob-havo Ilovasi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: background 0.5s ease;
+        }
+
+        body.hot {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        body.warm {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body.cool {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        body.cold {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            text-align: center;
+        }
+
+        .container h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .location {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .weather-icon {
+            font-size: 80px;
+            margin: 20px 0;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .temperature {
+            font-size: 64px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .description {
+            font-size: 20px;
+            text-transform: capitalize;
+            margin-bottom: 25px;
+            opacity: 0.95;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .detail-box {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 15px 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .detail-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .detail-box .icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .detail-box .label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .detail-box .value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .loading {
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .error button {
+            margin-top: 15px;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 10px;
+            background: white;
+            color: #764ba2;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .error button:hover {
+            transform: scale(1.05);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .search-box button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .search-box button:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .last-updated {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <h1>🌍 Ob-havo</h1>
+
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="Shahar nomini yozing...">
+            <button onclick="searchCity()">🔍</button>
+        </div>
+
+        <div id="weatherContent">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Joylashuvingiz aniqlanmoqda...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WMO ob-havo kodlarini tarjima qilish
+        const weatherCodes = {
+            0: { desc: "Ochiq osmon", icon: "☀️" },
+            1: { desc: "Asosan ochiq", icon: "🌤️" },
+            2: { desc: "Qisman bulutli", icon: "⛅" },
+            3: { desc: "Bulutli", icon: "☁️" },
+            45: { desc: "Tuman", icon: "🌫️" },
+            48: { desc: "Qirovli tuman", icon: "🌫️" },
+            51: { desc: "Yengil shivirlama", icon: "🌦️" },
+            53: { desc: "Shivirlama", icon: "🌦️" },
+            55: { desc: "Kuchli shivirlama", icon: "🌧️" },
+            56: { desc: "Muzlovchi shivirlama", icon: "🌧️" },
+            57: { desc: "Kuchli muzlovchi shivirlama", icon: "🌧️" },
+            61: { desc: "Yengil yomg'ir", icon: "🌧️" },
+            63: { desc: "Yomg'ir", icon: "🌧️" },
+            65: { desc: "Kuchli yomg'ir", icon: "🌧️" },
+            66: { desc: "Muzlovchi yomg'ir", icon: "🌨️" },
+            67: { desc: "Kuchli muzlovchi yomg'ir", icon: "🌨️" },
+            71: { desc: "Yengil qor", icon: "🌨️" },
+            73: { desc: "Qor", icon: "❄️" },
+            75: { desc: "Kuchli qor", icon: "❄️" },
+            77: { desc: "Qor donalari", icon: "🌨️" },
+            80: { desc: "Yengil dush", icon: "🌦️" },
+            81: { desc: "Dush", icon: "🌧️" },
+            82: { desc: "Kuchli dush", icon: "⛈️" },
+            85: { desc: "Qor dush", icon: "🌨️" },
+            86: { desc: "Kuchli qor dush", icon: "❄️" },
+            95: { desc: "Momqaldiroq", icon: "⛈️" },
+            96: { desc: "Dol bilan momqaldiroq", icon: "⛈️" },
+            99: { desc: "Kuchli dol bilan momqaldiroq", icon: "⛈️" }
+        };
+
+        // Geolokatsiya orqali ob-havo olish
+        function getWeatherByLocation(lat, lon) {
+            document.getElementById('weatherContent').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Ob-havo ma'lumotlari yuklanmoqda...</p>
+                </div>
+            `;
+
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m,apparent_temperature&timezone=auto`)
+                .then(res => res.json())
+                .then(data => {
+                    displayWeather(data, null, lat, lon);
+                })
+                .catch(err => {
+                    showError("Ma'lumot olishda xatolik yuz berdi.");
+                });
+        }
+
+        // Shahar nomi orqali ob-havo olish
+        function searchCity() {
+            const city = document.getElementById('cityInput').value.trim();
+            if (!city) return;
+
+            document.getElementById('weatherContent').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>"${city}" qidirilmoqda...</p>
+                </div>
+            `;
+
+            fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=uz`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.results || data.results.length === 0) {
+                        showError(`"${city}" shahri topilmadi. Qayta urinib ko'ring.`);
+                        return;
+                    }
+                    const result = data.results[0];
+                    getWeatherByLocation(result.latitude, result.longitude);
+                })
+                .catch(err => {
+                    showError("Qidirishda xatolik yuz berdi.");
+                });
+        }
+
+        // Ob-havo ma'lumotlarini ko'rsatish
+        function displayWeather(data, cityName, lat, lon) {
+            const current = data.current_weather;
+            const code = current.weathercode;
+            const weather = weatherCodes[code] || { desc: "Noma'lum", icon: "🌡️" };
+            const temp = Math.round(current.temperature);
+
+            // Orqa fon rangini haroratga qarab o'zgartirish
+            document.body.className = '';
+            if (temp >= 35) document.body.classList.add('hot');
+            else if (temp >= 20) document.body.classList.add('warm');
+            else if (temp >= 5) document.body.classList.add('cool');
+            else document.body.classList.add('cold');
+
+            // Namlik (birinchi soatdan)
+            let humidity = "—";
+            if (data.hourly && data.hourly.relativehumidity_2m) {
+                const nowHour = new Date().getHours();
+                humidity = data.hourly.relativehumidity_2m[nowHour] + "%";
+            }
+
+            // Hissiy harorat
+            let feelsLike = "—";
+            if (data.hourly && data.hourly.apparent_temperature) {
+                const nowHour = new Date().getHours();
+                feelsLike = Math.round(data.hourly.apparent_temperature[nowHour]) + "°C";
+            }
+
+            // Shamol
+            const windSpeed = Math.round(current.windspeed);
+            const windDir = getWindDirection(current.winddirection);
+
+            // Joylashuv nomi
+            const locationName = cityName || `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
+
+            // Vaqt
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+
+            document.getElementById('weatherContent').innerHTML = `
+                <div class="location">
+                    📍 ${locationName}
+                </div>
+
+                <div class="weather-icon">${weather.icon}</div>
+
+                <div class="temperature">${temp}°C</div>
+
+                <div class="description">${weather.desc}</div>
+
+                <div class="details">
+                    <div class="detail-box">
+                        <div class="icon">🌡️</div>
+                        <div class="label">Hissiy</div>
+                        <div class="value">${feelsLike}</div>
+                    </div>
+                    <div class="detail-box">
+                        <div class="icon">💧</div>
+                        <div class="label">Namlik</div>
+                        <div class="value">${humidity}</div>
+                    </div>
+                    <div class="detail-box">
+                        <div class="icon">💨</div>
+                        <div class="label">Shamol</div>
+                        <div class="value">${windSpeed} km/s</div>
+                    </div>
+                </div>
+
+                <div class="last-updated">
+                    🕐 Yangilangan: ${timeStr}
+                </div>
+            `;
+        }
+
+        // Shamol yo'nalishi
+        function getWindDirection(deg) {
+            const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            return dirs[Math.round(deg / 45) % 8];
+        }
+
+        // Xato ko'rsatish
+        function showError(message) {
+            document.getElementById('weatherContent').innerHTML = `
+                <div class="error">
+                    <p style="font-size: 40px; margin-bottom: 10px;">😔</p>
+                    <p>${message}</p>
+                    <button onclick="getLocation()">🔄 Qayta urinish</button>
+                </div>
+            `;
+        }
+
+        // Geolokatsiya olish
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        getWeatherByLocation(lat, lon);
+                    },
+                    (error) => {
+                        let msg = "Joylashuvni aniqlab bo'lmadi.";
+                        if (error.code === 1) msg = "Joylashuvga ruxsat berilmadi. Shahar nomini yozib qidiring.";
+                        else if (error.code === 2) msg = "Joylashuv mavjud emas.";
+                        else if (error.code === 3) msg = "Vaqt tugadi. Qayta urinib ko'ring.";
+                        showError(msg);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                showError("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi.");
+            }
+        }
+
+        // Enter tugmasi bilan qidirish
+        document.getElementById('cityInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchCity();
+        });
+
+        // Sahifa yuklanganda ishga tushirish
+        window.addEventListener('load', getLocation);
+    </script>
+</body>
+</html>
